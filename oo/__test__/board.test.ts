@@ -122,6 +122,7 @@ describe("Board", () => {
                     expect(board.canMove({row: 0, col: 0}, {row: 0, col: 0})).toEqual(false)
                 })
                 it("does not count the piece that is moved away", () => {
+                    console.log(board.canMove({row: 1, col: 1}, {row: 2, col: 1}))
                     expect(board.canMove({row: 1, col: 1}, {row: 2, col: 1})).toEqual(false)
                 })
                 it("recognizes moves on different rows and columns as invalid", () => {

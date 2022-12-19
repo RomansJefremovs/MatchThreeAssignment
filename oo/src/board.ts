@@ -64,38 +64,80 @@ export class Board<T> {
         }
     }
 
-    private Match(piece:Tile<T>):Match<T>|undefined{
+    private checkFromOrigin({element,position}:Tile<T>,direction:'right'|'left'|'up'|'down'){
+        const matchedArray:Position[] = []
+        const count = direction === 'right' ? this.width - position.col - 1
+            : direction === 'left' ? position.col
+                : direction === 'up' ? position.row
+                    : direction === 'down' ? this.height - position.row - 1:undefined
+        for (let i = 0; i < count; i++) {
+            const tempPosition = direction === 'right' ? {row:position.row,col:position.col + i + 1}
+                : direction === 'left' ? {row:position.row,col:i}
+                    : direction === 'up' ? {row:i,col:position.col}
+                        : direction === 'down' ? {row:position.row + i + 1,col:position.col} : undefined
+            const tileTemp = this.piece(tempPosition)
+            if (element === tileTemp){
+                matchedArray.push(tempPosition)
+            }else{
+                matchedArray.push({row:404, col:404})
+            }
+        }
+        for (let i = 0; i < matchedArray.length; i++) {
+            if (matchedArray[i].row === 404 || matchedArray[i].col === 404){
+                if (direction==="up"||"left"){
+                    matchedArray.splice(0,i+1)
+                }else{
+                    matchedArray.splice(i)
+                }
+            }
+        }
+        return matchedArray
+    }
+
+    private checkVerticalMatch({element,position}:Tile<T>,OriginTile:Tile<T>):Match<T>|undefined{
+        const matched:Match<T> = {matched:element,positions:[]}
+        const up:T = this.piece({row:position.row + 1,col:position.col})
+        const down:T = this.piece({row:position.row - 1,col:position.col})
+        if (up === undefined){
+            if (down === element){
+                const downMatch = this.checkFromOrigin({element,position},"down")
+                if (downMatch.length >= 2){
+                    matched.positions.push(position)
+                    for (let i = 0; i < downMatch.length; i++) {
+                        matched.positions.push(downMatch[i])
+                    }
+                    return matched
+                }else return undefined
+            }else return undefined
+        }else if (down === undefined){
+            if (up === element){
+                const upMatch = this.checkFromOrigin({element,position},"up")
+                if (upMatch.length >=2){
+                    matched.positions = upMatch
+                    matched.positions.push(position)
+                    return matched
+                }else return undefined
+            }else return undefined
+        }else if (up === element){
+
+        }
+    }
+
+    private Match(piece:Tile<T>, origin1:Tile<T>,origin2:Tile<T>):Match<T>|undefined{
         const position:Position = piece.position
+
         const leftTile:T = this.piece({row:position.row,col:position.col - 1})
         const rightTile:T = this.piece({row:position.row,col:position.col + 1})
         const aboveTile:T = this.piece({row:position.row + 1,col:position.col})
         const underTile:T = this.piece({row:position.row - 1,col:position.col})
         const match:Match<T> = {matched:piece.element,positions:[piece.position]}
-        const checkMatch = (direction:'right'|'left'|'up'|'down')=>{
-            const count = direction === 'right' ? this.width - (position.col + 1)
-                : direction === 'left' ? this.width - (position.col - 1)
-                    : direction === 'up' ? this.height - (position.row - 1)
-                        : direction === 'down' ? this.height - (position.row + 1):undefined
-
-            for (let i = 0; i < count; i++) {
-
-                const tempPosition = direction === 'right' ? {row:position.row,col:position.col + i + 1}
-                    : direction === 'left' ? {row:position.row,col:position.col - i - 1}
-                        : direction === 'up' ? {row:position.row + i + 1,col:position.col}
-                            : direction === 'down' ? {row:position.row - i - 1,col:position.col} : undefined
-
-                const tileTemp = this.piece(tempPosition)
-                if (piece.element === tileTemp){
-                    match.positions.push(tempPosition)
-                }
-            }
+        const checkMatch = (direction:'right'|'left'|'up'|'down')=> {
         }
         if (leftTile === piece.element && rightTile === piece.element){
             checkMatch("left")
             checkMatch("right")
             checkMatch("up")
             checkMatch("down")
-
             console.log("1",match)
             return match
         }else if (leftTile === piece.element){
@@ -139,7 +181,7 @@ export class Board<T> {
             checkMatch("right")
             checkMatch("up")
             checkMatch("down")
-            
+
             if(match.positions.length >= 3){
                 console.log("6",match)
                 return match
@@ -152,10 +194,10 @@ export class Board<T> {
             piece.element !== aboveTile &&
             piece.element !== underTile
         ){
-            
+
             return undefined
         }else {
-            
+
             return undefined
         }
     }
@@ -175,8 +217,8 @@ export class Board<T> {
             const primaryBoard = this.board
             // this.board[firstIndex].element = secondPiece
             // this.board[secondIndex].element = firstPiece
-            const firstMatch = this.Match({element: secondPiece, position: first})
-            const secondMatch = this.Match({element: firstPiece, position: second})
+            const firstMatch = this.Match({element: secondPiece, position: first},this.board[firstIndex],this.board[secondIndex])
+            const secondMatch = this.Match({element: firstPiece, position: second},this.board[firstIndex],this.board[secondIndex])
             // this.board = primaryBoard
             return firstMatch !== undefined ||
                  secondMatch !== undefined
